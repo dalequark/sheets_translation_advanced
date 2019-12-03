@@ -20,10 +20,10 @@ File -> Project properties. Under "Script properties," set:
 
 ```
 bucket: YOUR_BUCKET_NAME
-targetlang: "es" // some language code
-srclang: "en" // some language code
+targetLang: "es" // some language code
+srcLang: "en" // some language code
 projectId: YOUR_PROJECT_ID
-glossaryid: // This will be set in code
+glossaryId: // This will be set in code
 ```
 
 ## Linking a GCP Project

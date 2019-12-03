@@ -4,10 +4,10 @@ Create a new sheet, then select Tools -> Script Editor.
 You'll also need these "Script Properties":
 
 bucket: YOUR_BUCKET_NAME
-targetlang: "es" // some language code
-srclang: "en" // some language code
+targetLang: "es" // some language code
+srcLang: "en" // some language code
 projectId: YOUR_PROJECT_ID
-glossaryid: // This will be set in code
+glossaryId: // This will be set in code
 
 */
 
@@ -22,11 +22,11 @@ function onTranslationsEdit(e) {
 
     if (!e.value || e.value == e.oldValue) return;
 
-    var glossaryId = PropertiesService.getScriptProperties().getProperty('glossaryid');
-    var srclang = PropertiesService.getScriptProperties().getProperty('srclang');
-    var targetlang = PropertiesService.getScriptProperties().getProperty('targetlang');
+    var glossaryId = PropertiesService.getScriptProperties().getProperty('glossaryId');
+    var srcLang = PropertiesService.getScriptProperties().getProperty('srcLang');
+    var targetLang = PropertiesService.getScriptProperties().getProperty('targetLang');
 
-    var translation = translateWithGlossary([e.value], srclang, targetlang, glossaryId)
+    var translation = translateWithGlossary([e.value], srcLang, targetLang, glossaryId)
 
     e.range.getSheet().getRange(e.range.getRow(), e.range.getColumn() + 1).setValue(translation);
 
@@ -37,10 +37,10 @@ function updateGlossary() {
     // all the words in the "Translations" sheet with this new glossary.
     alert("Updating glossary and translations. This could take a moment.");
 
-    const [srcLang, targetLang, glossary] = getGlossary();
+    const [srcLang, targetLang, glossary] = getGlossaryFromSheet();
 
-    PropertiesService.getScriptProperties().setProperty('srclang', srcLang);
-    PropertiesService.getScriptProperties().setProperty('targetlang', targetLang);
+    PropertiesService.getScriptProperties().setProperty('srcLang', srcLang);
+    PropertiesService.getScriptProperties().setProperty('targetLang', targetLang);
 
     Logger.log("Converting from " + srcLang + " to " + targetLang);
     Logger.log("Glossary is :");
@@ -52,7 +52,8 @@ function updateGlossary() {
         return;
     }
     const glossaryId = 'g' + glossaryName.split(".")[0];
-    PropertiesService.getScriptProperties().setProperty('glossaryid', glossaryId);
+
+    PropertiesService.getScriptProperties().setProperty('glossaryId', glossaryId);
 
     const operationName = createGlossary(glossaryName, glossaryId, srcLang, targetLang);
 
@@ -116,9 +117,9 @@ function writeTranslations(translationsArray) {
     }
 }
 
-function getGlossary() {
+function getGlossaryFromSheet() {
     // Pulls the glossary from the current spreadsheet.
-    // Returns a (srclang, targetLang, glossary) array.
+    // Returns a (srcLang, targetLang, glossary) array.
 
     const glossarySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Glossary");
     const allData = glossarySheet.getDataRange().getValues();
@@ -155,8 +156,10 @@ function translateWithGlossary(textArray, srcLang, targetLang, glossaryId) {
     // Translates text arrat from the given src to target lang using a glossary.
 
     const projectId = PropertiesService.getScriptProperties().getProperty("projectId");
+
     var url = "https://translation.googleapis.com/v3beta1/projects/PROJECTID/locations/us-central1:translateText"
         .replace("PROJECTID", projectId);
+
     var data = {
         source_language_code: srcLang,
         target_language_code: targetLang,
@@ -164,6 +167,7 @@ function translateWithGlossary(textArray, srcLang, targetLang, glossaryId) {
         glossary_config: {
             glossary: "projects/PROJECTID/locations/us-central1/glossaries/GLOSSARYID"
                 .replace("PROJECTID", projectId)
+
                 .replace("GLOSSARYID", glossaryId)
         }
     };
@@ -188,6 +192,7 @@ function translateWithGlossary(textArray, srcLang, targetLang, glossaryId) {
         return x["translatedText"];
     });
 
+
 }
 
 function testTranslateWithGlossary() {
@@ -211,6 +216,7 @@ function createGlossary(gcsFilename, glossaryId, sourceLang, targetLang) {
     var data = {
         name: "projects/PROJECTID/locations/us-central1/glossaries/GLOSSARYID"
             .replace("PROJECTID", projectId)
+
             .replace("GLOSSARYID", glossaryId),
         language_pair: {
             source_language_code: sourceLang,
@@ -312,6 +318,7 @@ function csvFromDict(glossaryDict) {
         Logger.log("Error uploading glossary to GCS: " + response.getResponseCode());
         return false;
     }
+
     response = JSON.parse(response.getContentText());
     Logger.log("Tried to create gcs csv file " + glossaryName);
     return glossaryName;
