@@ -52,7 +52,6 @@ function updateGlossary() {
         return;
     }
     const glossaryId = 'g' + glossaryName.split(".")[0];
-
     PropertiesService.getScriptProperties().setProperty('glossaryId', glossaryId);
 
     const operationName = createGlossary(glossaryName, glossaryId, srcLang, targetLang);
@@ -156,7 +155,7 @@ function translateWithGlossary(textArray, srcLang, targetLang, glossaryId) {
     // Translates text arrat from the given src to target lang using a glossary.
 
     const projectId = PropertiesService.getScriptProperties().getProperty("projectId");
-
+    
     var url = "https://translation.googleapis.com/v3beta1/projects/PROJECTID/locations/us-central1:translateText"
         .replace("PROJECTID", projectId);
 
@@ -167,7 +166,6 @@ function translateWithGlossary(textArray, srcLang, targetLang, glossaryId) {
         glossary_config: {
             glossary: "projects/PROJECTID/locations/us-central1/glossaries/GLOSSARYID"
                 .replace("PROJECTID", projectId)
-
                 .replace("GLOSSARYID", glossaryId)
         }
     };
@@ -188,10 +186,18 @@ function translateWithGlossary(textArray, srcLang, targetLang, glossaryId) {
 
     response = JSON.parse(response.getContentText());
     console.log("Got translation response: ", response);
-    return response["glossaryTranslations"].map(function (x) {
-        return x["translatedText"];
-    });
 
+    if (Object.keys(response["glossaryTranslations"][0]).length) {
+        return response["glossaryTranslations"].map(function (x) {
+            return x["translatedText"];
+        });
+    }
+    else if (Object.keys(response["translations"][0]).length)
+        return response["translations"].map(function (x) {
+            return x["translatedText"];
+        });
+
+    return "Translation error :(";
 
 }
 
@@ -216,7 +222,6 @@ function createGlossary(gcsFilename, glossaryId, sourceLang, targetLang) {
     var data = {
         name: "projects/PROJECTID/locations/us-central1/glossaries/GLOSSARYID"
             .replace("PROJECTID", projectId)
-
             .replace("GLOSSARYID", glossaryId),
         language_pair: {
             source_language_code: sourceLang,
@@ -318,7 +323,7 @@ function csvFromDict(glossaryDict) {
         Logger.log("Error uploading glossary to GCS: " + response.getResponseCode());
         return false;
     }
-
+    
     response = JSON.parse(response.getContentText());
     Logger.log("Tried to create gcs csv file " + glossaryName);
     return glossaryName;
